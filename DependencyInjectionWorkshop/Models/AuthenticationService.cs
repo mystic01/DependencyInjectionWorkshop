@@ -13,7 +13,15 @@ namespace DependencyInjectionWorkshop.Models
     {
         public bool Verify(string accountId, string password, string otp)
         {
-            var passwordFromDb = "";
+            var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
+            var isLockedResponse = httpClient.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
+            isLockedResponse.EnsureSuccessStatusCode();
+            if (isLockedResponse.Content.ReadAsAsync<bool>().Result)
+            {
+                throw new FailedTooManyTimesException();
+            }
+
+            string passwordFromDb;
             using (var connection = new SqlConnection("my connection string"))
             {
                 passwordFromDb = connection.Query<string>("spGetUserPassword", new { Id = accountId },
@@ -30,7 +38,6 @@ namespace DependencyInjectionWorkshop.Models
 
             var hashedPassword = hash.ToString();
 
-            var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
             var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
             if (!response.IsSuccessStatusCode)
             {
@@ -57,5 +64,9 @@ namespace DependencyInjectionWorkshop.Models
                 return false;
             }
         }
+    }
+
+    public class FailedTooManyTimesException : Exception
+    {
     }
 }
