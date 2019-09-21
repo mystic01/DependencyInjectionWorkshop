@@ -15,7 +15,7 @@ namespace DependencyInjectionWorkshop.Models
             var passwordFromDb = "";
             using (var connection = new SqlConnection("my connection string"))
             {
-                passwordFromDb = connection.Query<string>("spGetUserPassword", new {Id = accountId},
+                passwordFromDb = connection.Query<string>("spGetUserPassword", new { Id = account },
                     commandType: CommandType.StoredProcedure).SingleOrDefault();
             }
 
@@ -29,7 +29,7 @@ namespace DependencyInjectionWorkshop.Models
 
             var hashedPassword = hash.ToString();
 
-            var httpClient = new HttpClient() {BaseAddress = new Uri("http://joey.com/")};
+            var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
             var response = httpClient.PostAsJsonAsync("api/otps", account).Result;
             if (!response.IsSuccessStatusCode)
             {
