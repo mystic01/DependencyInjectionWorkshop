@@ -1,8 +1,20 @@
-﻿using System;
-using DependencyInjectionWorkshop.Repositories;
+﻿using DependencyInjectionWorkshop.Repositories;
 
 namespace DependencyInjectionWorkshop.Models
 {
+    public class NlogAdapter
+    {
+        public NlogAdapter()
+        {
+        }
+
+        public void LogMessage(string message)
+        {
+            var logger = NLog.LogManager.GetCurrentClassLogger();
+            logger.Info(message);
+        }
+    }
+
     public class AuthenticationService
     {
         private readonly ProfileDao _profileDao;
@@ -10,6 +22,7 @@ namespace DependencyInjectionWorkshop.Models
         private readonly OtpService _otpService;
         private readonly SlackAdapter _slackAdapter;
         private readonly FailedCounter _failedCounter;
+        private readonly NlogAdapter _nlogAdapter;
 
         public AuthenticationService()
         {
@@ -18,6 +31,7 @@ namespace DependencyInjectionWorkshop.Models
             _otpService = new OtpService();
             _slackAdapter = new SlackAdapter();
             _failedCounter = new FailedCounter();
+            _nlogAdapter = new NlogAdapter();
         }
 
         public bool Verify(string accountId, string password, string otp)
@@ -43,28 +57,13 @@ namespace DependencyInjectionWorkshop.Models
             {
                 _failedCounter.AddFailedCount(accountId);
 
-                LogFailedCount(accountId);
+                var failedCount = _failedCounter.GetFailedCount(accountId);
+                _nlogAdapter.LogMessage($"accountId:{accountId} failed times:{failedCount}");
 
                 _slackAdapter.Notify(accountId);
 
                 return false;
             }
         }
-
-        private void LogFailedCount(string accountId)
-        {
-            var failedCount = _failedCounter.GetFailedCount(accountId);
-            LogMessage($"accountId:{accountId} failed times:{failedCount}");
-        }
-
-        private static void LogMessage(string message)
-        {
-            var logger = NLog.LogManager.GetCurrentClassLogger();
-            logger.Info(message);
-        }
-    }
-
-    public class FailedTooManyTimesException : Exception
-    {
     }
 }
