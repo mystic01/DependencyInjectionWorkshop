@@ -29,9 +29,9 @@ namespace DependencyInjectionWorkshop.Models
         {
         }
 
-        public string GetCurrentOtp(string accountId, HttpClient httpClient)
+        public string GetCurrentOtp(string accountId)
         {
-            var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
+            var response = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/otps", accountId).Result;
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"web api error, accountId:{accountId}");
@@ -74,8 +74,7 @@ namespace DependencyInjectionWorkshop.Models
 
         public bool Verify(string accountId, string password, string otp)
         {
-            var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
-            var isLocked = GetIsLocked(accountId, httpClient);
+            var isLocked = GetIsLocked(accountId, new HttpClient() { BaseAddress = new Uri("http://joey.com/") });
             if (isLocked)
             {
                 throw new FailedTooManyTimesException();
@@ -85,18 +84,18 @@ namespace DependencyInjectionWorkshop.Models
 
             var hashedPassword = _sha256Adapter.GetHashedPassword(password);
 
-            var currentOtp = _otpService.GetCurrentOtp(accountId, httpClient);
+            var currentOtp = _otpService.GetCurrentOtp(accountId);
 
             if (hashedPassword == passwordFromDb && otp == currentOtp)
             {
-                ResetFailedCount(accountId, httpClient);
+                ResetFailedCount(accountId, new HttpClient() { BaseAddress = new Uri("http://joey.com/") });
                 return true;
             }
             else
             {
-                AddFailedCount(accountId, httpClient);
+                AddFailedCount(accountId, new HttpClient() { BaseAddress = new Uri("http://joey.com/") });
 
-                LogFailedCount(accountId, httpClient);
+                LogFailedCount(accountId, new HttpClient() { BaseAddress = new Uri("http://joey.com/") });
 
                 _slackAdapter.Notify(accountId);
 
