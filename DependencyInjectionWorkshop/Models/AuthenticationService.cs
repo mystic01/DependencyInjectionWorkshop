@@ -41,7 +41,7 @@ namespace DependencyInjectionWorkshop.Models
 
             var passwordFromDb = _profile.GetPassword(accountId);
 
-            var hashedPassword = _hash.Hash(password);
+            var hashedPassword = _hash.Compute(password);
 
             var currentOtp = _otpService.GetCurrentOtp(accountId);
 

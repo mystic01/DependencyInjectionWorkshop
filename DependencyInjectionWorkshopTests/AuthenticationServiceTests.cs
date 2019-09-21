@@ -19,7 +19,7 @@ namespace DependencyInjectionWorkshopTests
             var logger = Substitute.For<ILogger>();
 
             profile.GetPassword("Mystic").Returns("hashed_password");
-            hash.Hash("password").Returns("hashed_password");
+            hash.Compute("password").Returns("hashed_password");
             otpService.GetCurrentOtp("Mystic").Returns("123456");
 
             var authenticationService = new AuthenticationService(profile, hash, otpService, notification, failedCounter, logger);
