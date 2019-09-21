@@ -11,12 +11,12 @@ namespace DependencyInjectionWorkshop.Models
 {
     public class AuthenticationService
     {
-        public bool Verify(string account, string password, string otp)
+        public bool Verify(string accountId, string password, string otp)
         {
             var passwordFromDb = "";
             using (var connection = new SqlConnection("my connection string"))
             {
-                passwordFromDb = connection.Query<string>("spGetUserPassword", new { Id = account },
+                passwordFromDb = connection.Query<string>("spGetUserPassword", new { Id = accountId },
                     commandType: CommandType.StoredProcedure).SingleOrDefault();
             }
 
@@ -31,26 +31,26 @@ namespace DependencyInjectionWorkshop.Models
             var hashedPassword = hash.ToString();
 
             var httpClient = new HttpClient() { BaseAddress = new Uri("http://joey.com/") };
-            var response = httpClient.PostAsJsonAsync("api/otps", account).Result;
+            var response = httpClient.PostAsJsonAsync("api/otps", accountId).Result;
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"web api error, accountId:{account}");
+                throw new Exception($"web api error, accountId:{accountId}");
             }
 
             var currentOtp = response.Content.ReadAsAsync<string>().Result;
 
             if (hashedPassword == passwordFromDb && otp == currentOtp)
             {
-                var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", account).Result;
+                var resetResponse = httpClient.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
                 resetResponse.EnsureSuccessStatusCode();
                 return true;
             }
             else
             {
-                var addFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", account).Result;
+                var addFailedCountResponse = httpClient.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
                 addFailedCountResponse.EnsureSuccessStatusCode();
 
-                var message = $"{account} try to login failed.";
+                var message = $"{accountId} try to login failed.";
                 var slackClient = new SlackClient("my api token");
                 slackClient.PostMessage(response1 => { }, "my channel", message, "my bot name");
 
