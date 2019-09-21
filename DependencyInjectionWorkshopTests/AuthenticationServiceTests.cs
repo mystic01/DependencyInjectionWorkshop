@@ -56,11 +56,50 @@ namespace DependencyInjectionWorkshopTests
             ShouldBeInvalid(isValid);
         }
 
+        private bool WhenInvalid()
+        {
+            GivenPassword(DefaultAccountId, DefaultHashedPassword);
+            GivenHash(DefaultInputPassword, DefaultHashedPassword);
+            GivenOtp(DefaultAccountId, DefaultOtp);
+
+            return WhenVerify(DefaultAccountId, DefaultInputPassword, "wrong otp");
+        }
+
         [Test]
         public void reset_failed_count_when_valid()
         {
             WhenValid();
             _failedCounter.Received(1).ResetFailedCount(DefaultAccountId);
+        }
+
+        [Test]
+        public void add_failed_count_when_invalid()
+        {
+            WhenInvalid();
+            _failedCounter.Received(1).AddFailedCount(DefaultAccountId);
+        }
+
+        [Test]
+        public void log_failed_count_when_invalid()
+        {
+            _failedCounter.GetFailedCount(DefaultAccountId).Returns(88);
+            WhenInvalid();
+            _logger.Received(1).Info(Arg.Is<string>(m => m.Contains(DefaultAccountId) && m.Contains("88")));
+        }
+
+        [Test]
+        public void notify_user_when_invalid()
+        {
+            WhenInvalid();
+            _notification.Received(1).Send(Arg.Is<string>(m => m.Contains(DefaultAccountId)));
+        }
+
+        [Test]
+        public void account_is_locked()
+        {
+            _failedCounter.GetIsLocked(DefaultAccountId).Returns(true);
+            TestDelegate action = () => WhenValid();
+            Assert.Throws<FailedTooManyTimesException>(action);
         }
 
         private void WhenValid()
