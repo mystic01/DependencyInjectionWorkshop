@@ -56,6 +56,22 @@ namespace DependencyInjectionWorkshopTests
             ShouldBeInvalid(isValid);
         }
 
+        [Test]
+        public void reset_failed_count_when_valid()
+        {
+            WhenValid();
+            _failedCounter.Received(1).ResetFailedCount(DefaultAccountId);
+        }
+
+        private void WhenValid()
+        {
+            GivenPassword(DefaultAccountId, DefaultHashedPassword);
+            GivenHash(DefaultInputPassword, DefaultHashedPassword);
+            GivenOtp(DefaultAccountId, DefaultOtp);
+
+            WhenVerify(DefaultAccountId, DefaultInputPassword, DefaultOtp);
+        }
+
         private static void ShouldBeInvalid(bool isValid)
         {
             Assert.IsFalse(isValid);
