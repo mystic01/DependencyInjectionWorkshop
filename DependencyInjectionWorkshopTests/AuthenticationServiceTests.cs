@@ -12,6 +12,7 @@ namespace DependencyInjectionWorkshopTests
         private const string DefaultHashedPassword = "hashed_password";
         private const string DefaultInputPassword = "password";
         private const string DefaultOtp = "123456";
+        private const int DefaultFailedCount = 88;
         private IProfile _profile;
         private IHash _hash;
         private IOtpService _otpService;
@@ -82,9 +83,9 @@ namespace DependencyInjectionWorkshopTests
         [Test]
         public void log_failed_count_when_invalid()
         {
-            _failedCounter.GetFailedCount(DefaultAccountId).Returns(88);
+            _failedCounter.GetFailedCount(DefaultAccountId).Returns(DefaultFailedCount);
             WhenInvalid();
-            _logger.Received(1).Info(Arg.Is<string>(m => m.Contains(DefaultAccountId) && m.Contains("88")));
+            _logger.Received(1).Info(Arg.Is<string>(m => m.Contains(DefaultAccountId) && m.Contains(DefaultFailedCount.ToString())));
         }
 
         [Test]
