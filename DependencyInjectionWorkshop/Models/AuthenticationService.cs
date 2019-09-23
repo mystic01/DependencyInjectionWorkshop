@@ -27,6 +27,26 @@ namespace DependencyInjectionWorkshop.Models
             var isLocked = isLockedResponse.Content.ReadAsAsync<bool>().Result;
             return isLocked;
         }
+
+        public int GetFailedCount(string accountId)
+        {
+            var failedCountResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
+            failedCountResponse.EnsureSuccessStatusCode();
+            var failedCount = failedCountResponse.Content.ReadAsAsync<int>().Result;
+            return failedCount;
+        }
+
+        public void AddFailedCount(string accountId)
+        {
+            var addFailedCountResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
+            addFailedCountResponse.EnsureSuccessStatusCode();
+        }
+
+        public void ResetFailedCount(string accountId)
+        {
+            var resetResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
+            resetResponse.EnsureSuccessStatusCode();
+        }
     }
 
     public class AuthenticationService
@@ -50,12 +70,12 @@ namespace DependencyInjectionWorkshop.Models
 
             if (hashedPassword == passwordFromDb && otp == currentOtp)
             {
-                ResetFailedCount(accountId);
+                _failedCounter.ResetFailedCount(accountId);
                 return true;
             }
             else
             {
-                AddFailedCount(accountId);
+                _failedCounter.AddFailedCount(accountId);
 
                 LogFailedCount(accountId);
 
@@ -67,29 +87,9 @@ namespace DependencyInjectionWorkshop.Models
 
         private void LogFailedCount(string accountId)
         {
-            var failedCount = GetFailedCount(accountId);
+            var failedCount = _failedCounter.GetFailedCount(accountId);
             var logger = NLog.LogManager.GetCurrentClassLogger();
             logger.Info($"accountId:{accountId} failed times:{failedCount}");
-        }
-
-        private static int GetFailedCount(string accountId)
-        {
-            var failedCountResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/GetFailedCount", accountId).Result;
-            failedCountResponse.EnsureSuccessStatusCode();
-            var failedCount = failedCountResponse.Content.ReadAsAsync<int>().Result;
-            return failedCount;
-        }
-
-        private static void AddFailedCount(string accountId)
-        {
-            var addFailedCountResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/Add", accountId).Result;
-            addFailedCountResponse.EnsureSuccessStatusCode();
-        }
-
-        private static void ResetFailedCount(string accountId)
-        {
-            var resetResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/Reset", accountId).Result;
-            resetResponse.EnsureSuccessStatusCode();
         }
 
         private static string GetCurrentOtp(string accountId)
