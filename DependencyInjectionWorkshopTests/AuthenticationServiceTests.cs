@@ -30,7 +30,7 @@ namespace DependencyInjectionWorkshopTests
             _logger = Substitute.For<ILogger>();
             _otpService = Substitute.For<IOtpService>();
             _authenticationService = new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
-            _authenticationService = new NotificationDecorator(_authenticationService, _notification);
+            _authenticationService = new AuthenticationDecorator(_authenticationService, _notification);
         }
 
         [Test]
