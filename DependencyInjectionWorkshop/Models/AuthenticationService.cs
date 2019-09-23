@@ -25,7 +25,7 @@ namespace DependencyInjectionWorkshop.Models
         {
             _slackAdapter = new SlackAdapter();
             _failedCounter = new FailedCounter();
-            _nLogAdapter = new NLogAdapter(_failedCounter);
+            _nLogAdapter = new NLogAdapter();
             _profileDao = new ProfileDao();
             _sha256Adapter = new Sha256Adapter();
             _otpService = new OtpService();
@@ -33,7 +33,10 @@ namespace DependencyInjectionWorkshop.Models
 
         public bool Verify(string accountId, string password, string otp)
         {
-            _failedCounter.CheckAccountIsLocked(accountId);
+            if (_failedCounter.IsAccountLocked(accountId))
+            {
+                throw new FailedTooManyTimesException();
+            }
 
             var passwordFromDb = _profileDao.GetHashedPasswordFromDb(accountId);
 
@@ -50,9 +53,10 @@ namespace DependencyInjectionWorkshop.Models
             {
                 _failedCounter.AddFailedCount(accountId);
 
-                _nLogAdapter.Info(accountId);
+                var message = $"accountId:{accountId} failed times:{_failedCounter.GetFailedCount(accountId)}";
+                _nLogAdapter.Info(message);
 
-                _slackAdapter.SendLogFailedMessage($"{accountId} try to login failed.");
+                _slackAdapter.Send($"{accountId} try to login failed.");
 
                 return false;
             }

@@ -1,5 +1,6 @@
 ﻿using DependencyInjectionWorkshop.Models;
 using NSubstitute;
+using NSubstitute.Extensions;
 using NUnit.Framework;
 
 namespace DependencyInjectionWorkshopTests
@@ -11,6 +12,7 @@ namespace DependencyInjectionWorkshopTests
         private const string DefaultHashedPassword = "hashed_password";
         private const string DefaultPassword = "password";
         private const string DefaultOtp = "123456";
+        private const int DefaultFailedCount = 87;
         private IProfile _profileDao;
         private INotification _notification;
         private IFailedCounter _failedCounter;
@@ -67,11 +69,54 @@ namespace DependencyInjectionWorkshopTests
             Assert.IsFalse(isValid);
         }
 
+        private bool WhenInvalid()
+        {
+            _profileDao.GetHashedPasswordFromDb(DefaultAccountId).Returns(DefaultHashedPassword);
+            _hash.Hash(DefaultPassword).Returns(DefaultHashedPassword);
+            _otpService.GetCurrentOtp(DefaultAccountId).Returns(DefaultOtp);
+
+            var authenticationService =
+                new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
+            var isValid = authenticationService.Verify(DefaultAccountId, "wrong password", DefaultOtp);
+            return isValid;
+        }
+
         [Test]
         public void reset_failed_counter_when_valid()
         {
             WhenValid();
             _failedCounter.Received(1).ResetFailedCount(DefaultAccountId);
+        }
+
+        [Test]
+        public void add_failed_counter_when_invalid()
+        {
+            WhenInvalid();
+            _failedCounter.Received(1).AddFailedCount(DefaultAccountId);
+        }
+
+        [Test]
+        public void log_failed_counter_when_invalid()
+        {
+            _failedCounter.GetFailedCount(DefaultAccountId).Returns(DefaultFailedCount);
+            WhenInvalid();
+            _logger.Received(1).Info(Arg.Is<string>(m =>
+                m.Contains(DefaultAccountId) && m.Contains(DefaultFailedCount.ToString())));
+        }
+
+        [Test]
+        public void send_message_when_invalid()
+        {
+            WhenInvalid();
+            _notification.Received(1).Send(Arg.Is<string>(m => m.Contains(DefaultAccountId)));
+        }
+
+        [Test]
+        public void throw_exception_when_account_is_locked()
+        {
+            _failedCounter.IsAccountLocked(DefaultAccountId).Returns(true);
+            TestDelegate action = () => WhenValid();
+            Assert.Throws<FailedTooManyTimesException>(action);
         }
     }
 }
