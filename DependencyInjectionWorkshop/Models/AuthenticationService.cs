@@ -18,13 +18,25 @@ namespace DependencyInjectionWorkshop.Models
         }
     }
 
+    public class FailedCounter
+    {
+        public bool IsAccountLocked(string accountId)
+        {
+            var isLockedResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
+            isLockedResponse.EnsureSuccessStatusCode();
+            var isLocked = isLockedResponse.Content.ReadAsAsync<bool>().Result;
+            return isLocked;
+        }
+    }
+
     public class AuthenticationService
     {
         private readonly SlackAdapter _slackAdapter = new SlackAdapter();
+        private readonly FailedCounter _failedCounter = new FailedCounter();
 
         public bool Verify(string accountId, string password, string otp)
         {
-            var isLocked = IsAccountLocked(accountId);
+            var isLocked = _failedCounter.IsAccountLocked(accountId);
             if (isLocked)
             {
                 throw new FailedTooManyTimesException();
@@ -104,14 +116,6 @@ namespace DependencyInjectionWorkshop.Models
 
             var hashedPassword = hash.ToString();
             return hashedPassword;
-        }
-
-        private static bool IsAccountLocked(string accountId)
-        {
-            var isLockedResponse = new HttpClient() { BaseAddress = new Uri("http://joey.com/") }.PostAsJsonAsync("api/failedCounter/IsLocked", accountId).Result;
-            isLockedResponse.EnsureSuccessStatusCode();
-            var isLocked = isLockedResponse.Content.ReadAsAsync<bool>().Result;
-            return isLocked;
         }
 
         private static string GetHashedPasswordFromDb(string accountId)
