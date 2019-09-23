@@ -2,6 +2,7 @@
 {
     public interface ILogger
     {
+        void Info(string accountId);
     }
 
     public class NLogAdapter : ILogger

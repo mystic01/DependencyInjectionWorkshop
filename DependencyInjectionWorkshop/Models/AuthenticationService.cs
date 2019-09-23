@@ -6,12 +6,12 @@ namespace DependencyInjectionWorkshop.Models
     {
         private readonly INotification _slackAdapter;
         private readonly IFailedCounter _failedCounter;
-        private readonly NLogAdapter _nLogAdapter;
+        private readonly ILogger _nLogAdapter;
         private readonly IProfile _profileDao;
         private readonly IHash _sha256Adapter;
         private readonly IOtpService _otpService;
 
-        public AuthenticationService(INotification slackAdapter, IFailedCounter failedCounter, NLogAdapter nLogAdapter, IProfile profileDao, IHash sha256Adapter, IOtpService otpService)
+        public AuthenticationService(INotification slackAdapter, IFailedCounter failedCounter, ILogger nLogAdapter, IProfile profileDao, IHash sha256Adapter, IOtpService otpService)
         {
             _slackAdapter = slackAdapter;
             _failedCounter = failedCounter;
