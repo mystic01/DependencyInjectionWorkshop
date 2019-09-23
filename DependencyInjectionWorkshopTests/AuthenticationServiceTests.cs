@@ -1,6 +1,5 @@
 ﻿using DependencyInjectionWorkshop.Models;
 using NSubstitute;
-using NSubstitute.Extensions;
 using NUnit.Framework;
 
 namespace DependencyInjectionWorkshopTests
@@ -117,6 +116,17 @@ namespace DependencyInjectionWorkshopTests
             _failedCounter.IsAccountLocked(DefaultAccountId).Returns(true);
             TestDelegate action = () => WhenValid();
             Assert.Throws<FailedTooManyTimesException>(action);
+        }
+
+        [Test]
+        public void add_and_then_log_failed_count()
+        {
+            WhenInvalid();
+            Received.InOrder(() =>
+            {
+                _failedCounter.AddFailedCount(DefaultAccountId);
+                _logger.Info(Arg.Any<string>());
+            });
         }
     }
 }
