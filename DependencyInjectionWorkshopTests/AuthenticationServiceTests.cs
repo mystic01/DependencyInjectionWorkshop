@@ -18,6 +18,7 @@ namespace DependencyInjectionWorkshopTests
         private IHash _hash;
         private ILogger _logger;
         private IOtpService _otpService;
+        private IAuthentication _authenticationService;
 
         [SetUp]
         public void SetUp()
@@ -28,6 +29,8 @@ namespace DependencyInjectionWorkshopTests
             _hash = Substitute.For<IHash>();
             _logger = Substitute.For<ILogger>();
             _otpService = Substitute.For<IOtpService>();
+            _authenticationService = new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
+            _authenticationService = new NotificationDecorator(_authenticationService, _notification);
         }
 
         [Test]
@@ -49,9 +52,7 @@ namespace DependencyInjectionWorkshopTests
             _hash.Hash(DefaultPassword).Returns(DefaultHashedPassword);
             _otpService.GetCurrentOtp(DefaultAccountId).Returns(DefaultOtp);
 
-            var authenticationService =
-                new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
-            var isValid = authenticationService.Verify(DefaultAccountId, DefaultPassword, DefaultOtp);
+            var isValid = _authenticationService.Verify(DefaultAccountId, DefaultPassword, DefaultOtp);
             return isValid;
         }
 
@@ -74,9 +75,7 @@ namespace DependencyInjectionWorkshopTests
             _hash.Hash(DefaultPassword).Returns(DefaultHashedPassword);
             _otpService.GetCurrentOtp(DefaultAccountId).Returns(DefaultOtp);
 
-            var authenticationService =
-                new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
-            var isValid = authenticationService.Verify(DefaultAccountId, "wrong password", DefaultOtp);
+            var isValid = _authenticationService.Verify(DefaultAccountId, "wrong password", DefaultOtp);
             return isValid;
         }
 

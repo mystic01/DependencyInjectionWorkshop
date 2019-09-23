@@ -2,7 +2,36 @@
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public class AuthenticationService
+    public class NotificationDecorator : IAuthentication
+    {
+        private readonly IAuthentication _authentication;
+        private readonly INotification _notification;
+
+        public NotificationDecorator(IAuthentication authentication, INotification notification)
+        {
+            _authentication = authentication;
+            _notification = notification;
+        }
+
+        private void Send(string accountId)
+        {
+            _notification.Send($"{accountId} try to login failed.");
+        }
+
+        public bool Verify(string accountId, string password, string otp)
+        {
+            var isValid = _authentication.Verify(accountId, password, otp);
+            Send(accountId);
+            return isValid;
+        }
+    }
+
+    public interface IAuthentication
+    {
+        bool Verify(string accountId, string password, string otp);
+    }
+
+    public class AuthenticationService : IAuthentication
     {
         private readonly INotification _slackAdapter;
         private readonly IFailedCounter _failedCounter;
@@ -55,8 +84,6 @@ namespace DependencyInjectionWorkshop.Models
 
                 var message = $"accountId:{accountId} failed times:{_failedCounter.GetFailedCount(accountId)}";
                 _nLogAdapter.Info(message);
-
-                _slackAdapter.Send($"{accountId} try to login failed.");
 
                 return false;
             }
