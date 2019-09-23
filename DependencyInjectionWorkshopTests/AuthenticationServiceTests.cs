@@ -36,8 +36,22 @@ namespace DependencyInjectionWorkshopTests
             _hash.Hash(DefaultPassword).Returns(DefaultHashedPassword);
             _otpService.GetCurrentOtp(DefaultAccountId).Returns(DefaultOtp);
 
-            var isValid = WhenVerify();
+            var authenticationService =
+                new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
+            var isValid = authenticationService.Verify(DefaultAccountId, DefaultPassword, DefaultOtp);
             Assert.IsTrue(isValid);
+        }
+
+        private bool WhenValid()
+        {
+            _profileDao.GetHashedPasswordFromDb(DefaultAccountId).Returns(DefaultHashedPassword);
+            _hash.Hash(DefaultPassword).Returns(DefaultHashedPassword);
+            _otpService.GetCurrentOtp(DefaultAccountId).Returns(DefaultOtp);
+
+            var authenticationService =
+                new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
+            var isValid = authenticationService.Verify(DefaultAccountId, DefaultPassword, DefaultOtp);
+            return isValid;
         }
 
         [Test]
@@ -53,12 +67,11 @@ namespace DependencyInjectionWorkshopTests
             Assert.IsFalse(isValid);
         }
 
-        private bool WhenVerify()
+        [Test]
+        public void reset_failed_counter_when_valid()
         {
-            var authenticationService =
-                new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
-            var isValid = authenticationService.Verify(DefaultAccountId, DefaultPassword, DefaultOtp);
-            return isValid;
+            WhenValid();
+            _failedCounter.Received(1).ResetFailedCount(DefaultAccountId);
         }
     }
 }
