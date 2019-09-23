@@ -40,6 +40,19 @@ namespace DependencyInjectionWorkshopTests
             Assert.IsTrue(isValid);
         }
 
+        [Test]
+        public void is_invalid()
+        {
+            _profileDao.GetHashedPasswordFromDb(DefaultAccountId).Returns(DefaultHashedPassword);
+            _hash.Hash(DefaultPassword).Returns(DefaultHashedPassword);
+            _otpService.GetCurrentOtp(DefaultAccountId).Returns(DefaultOtp);
+
+            var authenticationService =
+                new AuthenticationService(_notification, _failedCounter, _logger, _profileDao, _hash, _otpService);
+            var isValid = authenticationService.Verify(DefaultAccountId, "wrong password", DefaultOtp);
+            Assert.IsFalse(isValid);
+        }
+
         private bool WhenVerify()
         {
             var authenticationService =
