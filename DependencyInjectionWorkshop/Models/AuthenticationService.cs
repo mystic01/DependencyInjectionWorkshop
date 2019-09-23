@@ -9,18 +9,15 @@ namespace DependencyInjectionWorkshop.Models
 
     public class AuthenticationService : IAuthentication
     {
-        private readonly INotification _slackAdapter;
         private readonly IFailedCounter _failedCounter;
-        private readonly ILogger _nLogAdapter;
         private readonly IProfile _profileDao;
         private readonly IHash _sha256Adapter;
         private readonly IOtpService _otpService;
+        private readonly LogDecorator _logDecorator;
 
-        public AuthenticationService(INotification slackAdapter, IFailedCounter failedCounter, ILogger nLogAdapter, IProfile profileDao, IHash sha256Adapter, IOtpService otpService)
+        public AuthenticationService(IFailedCounter failedCounter, IProfile profileDao, IHash sha256Adapter, IOtpService otpService)
         {
-            _slackAdapter = slackAdapter;
             _failedCounter = failedCounter;
-            _nLogAdapter = nLogAdapter;
             _profileDao = profileDao;
             _sha256Adapter = sha256Adapter;
             _otpService = otpService;
@@ -28,9 +25,7 @@ namespace DependencyInjectionWorkshop.Models
 
         public AuthenticationService()
         {
-            _slackAdapter = new SlackAdapter();
             _failedCounter = new FailedCounter();
-            _nLogAdapter = new NLogAdapter();
             _profileDao = new ProfileDao();
             _sha256Adapter = new Sha256Adapter();
             _otpService = new OtpService();
@@ -57,10 +52,6 @@ namespace DependencyInjectionWorkshop.Models
             else
             {
                 _failedCounter.AddFailedCount(accountId);
-
-                var message = $"accountId:{accountId} failed times:{_failedCounter.GetFailedCount(accountId)}";
-                _nLogAdapter.Info(message);
-
                 return false;
             }
         }
