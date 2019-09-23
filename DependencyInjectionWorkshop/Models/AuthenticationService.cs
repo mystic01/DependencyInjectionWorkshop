@@ -4,12 +4,22 @@ namespace DependencyInjectionWorkshop.Models
 {
     public class AuthenticationService
     {
-        private readonly SlackAdapter _slackAdapter;
-        private readonly FailedCounter _failedCounter;
+        private readonly INotification _slackAdapter;
+        private readonly IFailedCounter _failedCounter;
         private readonly NLogAdapter _nLogAdapter;
-        private readonly ProfileDao _profileDao;
-        private readonly Sha256Adapter _sha256Adapter;
-        private readonly OtpService _otpService;
+        private readonly IProfile _profileDao;
+        private readonly IHash _sha256Adapter;
+        private readonly IOtpService _otpService;
+
+        public AuthenticationService(INotification slackAdapter, IFailedCounter failedCounter, NLogAdapter nLogAdapter, IProfile profileDao, IHash sha256Adapter, IOtpService otpService)
+        {
+            _slackAdapter = slackAdapter;
+            _failedCounter = failedCounter;
+            _nLogAdapter = nLogAdapter;
+            _profileDao = profileDao;
+            _sha256Adapter = sha256Adapter;
+            _otpService = otpService;
+        }
 
         public AuthenticationService()
         {
@@ -27,7 +37,7 @@ namespace DependencyInjectionWorkshop.Models
 
             var passwordFromDb = _profileDao.GetHashedPasswordFromDb(accountId);
 
-            var hashedPassword = _sha256Adapter.GetHashedPassword(password);
+            var hashedPassword = _sha256Adapter.Hash(password);
 
             var currentOtp = _otpService.GetCurrentOtp(accountId);
 
@@ -40,7 +50,7 @@ namespace DependencyInjectionWorkshop.Models
             {
                 _failedCounter.AddFailedCount(accountId);
 
-                _nLogAdapter.LogFailedCount(accountId);
+                _nLogAdapter.Info(accountId);
 
                 _slackAdapter.SendLogFailedMessage($"{accountId} try to login failed.");
 

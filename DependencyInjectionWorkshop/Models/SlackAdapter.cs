@@ -2,7 +2,12 @@
 
 namespace DependencyInjectionWorkshop.Models
 {
-    public class SlackAdapter
+    public interface INotification
+    {
+        void SendLogFailedMessage(string message);
+    }
+
+    public class SlackAdapter : INotification
     {
         public void SendLogFailedMessage(string message)
         {

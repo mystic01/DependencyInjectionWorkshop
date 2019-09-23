@@ -1,15 +1,19 @@
 ﻿namespace DependencyInjectionWorkshop.Models
 {
-    public class NLogAdapter
+    public interface ILogger
     {
-        private FailedCounter _failedCounter;
+    }
 
-        public NLogAdapter(FailedCounter failedCounter)
+    public class NLogAdapter : ILogger
+    {
+        private readonly IFailedCounter _failedCounter;
+
+        public NLogAdapter(IFailedCounter failedCounter)
         {
             _failedCounter = failedCounter;
         }
 
-        public void LogFailedCount(string accountId)
+        public void Info(string accountId)
         {
             var failedCount = _failedCounter.GetFailedCount(accountId);
             var logger = NLog.LogManager.GetCurrentClassLogger();
