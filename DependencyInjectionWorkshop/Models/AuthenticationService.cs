@@ -9,8 +9,19 @@ using SlackAPI;
 
 namespace DependencyInjectionWorkshop.Models
 {
+    public class SlackAdapter
+    {
+        public void SendLogFailedMessage(string message)
+        {
+            var slackClient = new SlackClient("my api token");
+            slackClient.PostMessage(response1 => { }, "my channel", message, "my bot name");
+        }
+    }
+
     public class AuthenticationService
     {
+        private readonly SlackAdapter _slackAdapter = new SlackAdapter();
+
         public bool Verify(string accountId, string password, string otp)
         {
             var isLocked = IsAccountLocked(accountId);
@@ -36,19 +47,13 @@ namespace DependencyInjectionWorkshop.Models
 
                 LogFailedCount(accountId);
 
-                SendLogFailedMessage($"{accountId} try to login failed.");
+                _slackAdapter.SendLogFailedMessage($"{accountId} try to login failed.");
 
                 return false;
             }
         }
 
-        private static void SendLogFailedMessage(string message)
-        {
-            var slackClient = new SlackClient("my api token");
-            slackClient.PostMessage(response1 => { }, "my channel", message, "my bot name");
-        }
-
-        private static void LogFailedCount(string accountId)
+        private void LogFailedCount(string accountId)
         {
             var failedCount = GetFailedCount(accountId);
             var logger = NLog.LogManager.GetCurrentClassLogger();
