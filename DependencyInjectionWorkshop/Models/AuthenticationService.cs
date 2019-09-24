@@ -7,13 +7,40 @@ namespace DependencyInjectionWorkshop.Models
         bool Verify(string accountId, string password, string otp);
     }
 
+    public class FailedCounterDecorator : AuthenticationDecoratorBase
+    {
+        private readonly IFailedCounter _failedCounter;
+
+        public FailedCounterDecorator(IAuthentication authentication, IFailedCounter failedCounter) : base(authentication)
+        {
+            _authentication = authentication;
+            _failedCounter = failedCounter;
+        }
+
+        private void AddFailedCounter(string accountId)
+        {
+            _failedCounter.AddFailedCount(accountId);
+        }
+
+        public override bool Verify(string accountId, string password, string otp)
+        {
+            var isValid = _authentication.Verify(accountId, password, otp);
+            if (!isValid)
+            {
+                AddFailedCounter(accountId);
+            }
+
+            return isValid;
+        }
+    }
+
     public class AuthenticationService : IAuthentication
     {
         private readonly IFailedCounter _failedCounter;
         private readonly IProfile _profileDao;
         private readonly IHash _sha256Adapter;
         private readonly IOtpService _otpService;
-        private readonly LogDecorator _logDecorator;
+        private readonly FailedCounterDecorator _failedCounterDecorator;
 
         public AuthenticationService(IFailedCounter failedCounter, IProfile profileDao, IHash sha256Adapter, IOtpService otpService)
         {
@@ -51,7 +78,6 @@ namespace DependencyInjectionWorkshop.Models
             }
             else
             {
-                _failedCounter.AddFailedCount(accountId);
                 return false;
             }
         }

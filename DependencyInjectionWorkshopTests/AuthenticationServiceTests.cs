@@ -31,6 +31,7 @@ namespace DependencyInjectionWorkshopTests
             _otpService = Substitute.For<IOtpService>();
             _authenticationService = new AuthenticationService(_failedCounter, _profileDao, _hash, _otpService);
             _authenticationService = new NotificationDecorator(_authenticationService, _notification);
+            _authenticationService = new FailedCounterDecorator(_authenticationService, _failedCounter);
             _authenticationService = new LogDecorator(_authenticationService, _logger, _failedCounter);
         }
 
