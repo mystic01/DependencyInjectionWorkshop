@@ -30,18 +30,8 @@ namespace DependencyInjectionWorkshop.Models
             _otpService = new OtpService();
         }
 
-        public IFailedCounter FailedCounter
-        {
-            get { return _failedCounter; }
-        }
-
         public bool Verify(string accountId, string password, string otp)
         {
-            if (_failedCounter.IsAccountLocked(accountId))
-            {
-                throw new FailedTooManyTimesException();
-            }
-
             var passwordFromDb = _profileDao.GetHashedPasswordFromDb(accountId);
 
             var hashedPassword = _sha256Adapter.Hash(password);
